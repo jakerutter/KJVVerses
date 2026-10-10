@@ -1,4 +1,4 @@
--- KJVVerses v2.3 - World of Warcraft Classic Era
+-- KJVVerses v2.4 - World of Warcraft Classic Era
 local ADDON_NAME = "KJVVerses"
 local DEFAULT_ROTATION_INTERVAL = 120
 local ROTATION_OPTIONS = {30, 60, 120, 300, 600}
@@ -6,6 +6,24 @@ local PADDING = 15
 local MIN_WIDTH, MAX_WIDTH = 250, 900
 local MIN_HEIGHT, MAX_HEIGHT = 60, 350
 local MIN_FONT_SIZE, MAX_FONT_SIZE = 10, 30
+
+-- Light colors selected for readability over dark game backgrounds.
+-- The Scripture reference always stays gold.
+local TEXT_COLORS = {
+    { name = "White",      hex = "FFFFFF" },
+    { name = "Warm White", hex = "FFF1D6" },
+    { name = "Gold",       hex = "FFD700" },
+    { name = "Light Blue", hex = "86CEFA" },
+    { name = "Light Green",hex = "98E6A3" },
+    { name = "Soft Yellow",hex = "FFF59A" }
+}
+
+local function FindTextColor(name)
+    for _, color in ipairs(TEXT_COLORS) do
+        if color.name == name then return color end
+    end
+    return TEXT_COLORS[1]
+end
 
 local verses = {
     { reference = "John 14:6", text = "Jesus saith unto him, I am the way, the truth, and the life: no man cometh unto the Father, but by me." },
@@ -64,7 +82,7 @@ local function Defaults()
     return {
         x = 0, y = (UIParent:GetHeight() / 2) - 100,
         width = 500, height = 100, opacity = 0.35,
-        fontSize = 16, visible = true, rotationInterval = DEFAULT_ROTATION_INTERVAL
+        fontSize = 16, textColor = "White", visible = true, rotationInterval = DEFAULT_ROTATION_INTERVAL
     }
 end
 
@@ -82,6 +100,7 @@ local function InitializeSettings()
     KJVVersesDB.height = Clamp(KJVVersesDB.height, MIN_HEIGHT, MAX_HEIGHT)
     KJVVersesDB.opacity = Clamp(KJVVersesDB.opacity, 0, 1)
     KJVVersesDB.fontSize = Clamp(KJVVersesDB.fontSize, MIN_FONT_SIZE, MAX_FONT_SIZE)
+    KJVVersesDB.textColor = FindTextColor(KJVVersesDB.textColor).name
     local validInterval = false
     for _, interval in ipairs(ROTATION_OPTIONS) do
         if KJVVersesDB.rotationInterval == interval then validInterval = true; break end
@@ -94,7 +113,7 @@ local paused = false -- Pause state is session-only; reload resumes rotation.
 local rotationTimer
 local editMode = false
 local verseFrame, verseText, background, resizeHandle, configFrame
-local lockButton, pauseButton, intervalButton, intervalValue
+local lockButton, pauseButton, intervalButton, colorButton
 local sliders = {}
 local borderTextures = {}
 
@@ -137,7 +156,8 @@ end
 
 local function UpdateVerse()
     local verse = verses[currentVerse]
-    verseText:SetText("|cFFFFD700" .. verse.reference .. "|r - " .. verse.text)
+    local color = FindTextColor(KJVVersesDB.textColor)
+    verseText:SetText("|cFFFFD700" .. verse.reference .. "|r - |cFF" .. color.hex .. verse.text .. "|r")
     UpdateVerseLayout()
 end
 
@@ -232,6 +252,19 @@ local function SetRotationInterval(seconds)
         end
     end
     return false
+end
+
+-- The color selector cycles through the six readable presets.
+local function RefreshColorButton()
+    if colorButton then
+        colorButton:SetText("Text Color: " .. KJVVersesDB.textColor)
+    end
+end
+
+local function SetTextColor(name)
+    KJVVersesDB.textColor = FindTextColor(name).name
+    UpdateVerse()
+    RefreshColorButton()
 end
 
 local function RefreshSliders()
@@ -386,7 +419,7 @@ end
 
 local function CreateSettingsWindow()
     configFrame = CreateFrame("Frame", "KJVVersesConfig", UIParent)
-    configFrame:SetSize(370, 550)
+    configFrame:SetSize(370, 625)
     configFrame:SetPoint("CENTER")
     configFrame:SetFrameStrata("DIALOG")
     configFrame:SetMovable(true)
@@ -432,14 +465,34 @@ local function CreateSettingsWindow()
             ApplyFontSize()
         end)
 
+    -- Scripture text color selector; reference remains gold.
+    local colorLabel = configFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    colorLabel:SetPoint("TOP", configFrame, "TOP", 0, -396)
+    colorLabel:SetText("Scripture text color")
+
+    colorButton = CreateFrame("Button", nil, configFrame, "UIPanelButtonTemplate")
+    colorButton:SetSize(220, 28)
+    colorButton:SetPoint("TOP", configFrame, "TOP", 0, -414)
+    colorButton:SetScript("OnClick", function()
+        local nextIndex = 1
+        for i, color in ipairs(TEXT_COLORS) do
+            if color.name == KJVVersesDB.textColor then
+                nextIndex = (i % #TEXT_COLORS) + 1
+                break
+            end
+        end
+        SetTextColor(TEXT_COLORS[nextIndex].name)
+    end)
+    RefreshColorButton()
+
     -- Rotation interval selector; cycles through preset values.
     local intervalLabel = configFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    intervalLabel:SetPoint("TOP", configFrame, "TOP", 0, -399)
+    intervalLabel:SetPoint("TOP", configFrame, "TOP", 0, -472)
     intervalLabel:SetText("Verse rotation interval")
 
     intervalButton = CreateFrame("Button", nil, configFrame, "UIPanelButtonTemplate")
     intervalButton:SetSize(220, 28)
-    intervalButton:SetPoint("TOP", configFrame, "TOP", 0, -417)
+    intervalButton:SetPoint("TOP", configFrame, "TOP", 0, -490)
     intervalButton:SetScript("OnClick", function()
         local nextIndex = 1
         for i, seconds in ipairs(ROTATION_OPTIONS) do
@@ -471,6 +524,7 @@ local function CreateSettingsWindow()
         RefreshLockButton()
         RefreshPauseButton()
         RefreshIntervalButton()
+        RefreshColorButton()
     end)
     RefreshLockButton()
     RefreshPauseButton()
@@ -491,6 +545,8 @@ local function ResetSettings()
     ApplyOpacity()
     ApplyFontSize()
     RefreshSliders()
+    RefreshColorButton()
+    UpdateVerse()
     PrintMessage("Panel layout and appearance restored to defaults.")
 end
 
