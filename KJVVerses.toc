@@ -1,0 +1,9 @@
+
+## Interface: 11509
+## Title: KJV Verses
+## Notes: Displays rotating King James Bible verses
+## Author: Me
+## Version: 2.0
+## SavedVariables: KJVVersesDB
+
+KJVVerses.lua
