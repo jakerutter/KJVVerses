@@ -66,4 +66,10 @@ Scripture excerpts are from the **King James Version (KJV)** of the Bible. KJVVe
 
 ## License
 
-A license has **not yet been selected for this repository**. Choose and add a `LICENSE` file before inviting reuse or contributions. Review applicable Scripture-text rights in regions where you distribute the addon.
+KJVVerses is open-source software licensed under the MIT License.
+
+You are free to use, modify, and distribute the addon in accordance with the terms of the license. See the LICENSE file for details.
+
+Scripture quotations are from the King James Version (KJV) of the Bible, which is in the public domain in the United States. Rights to the KJV are subject to separate restrictions in certain jurisdictions, including the United Kingdom.
+
+The MIT License applies to the addon's original source code and does not alter any applicable rights associated with the Scripture text.
