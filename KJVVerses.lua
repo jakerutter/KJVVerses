@@ -108,7 +108,7 @@ local function InitializeSettings()
     if not validInterval then KJVVersesDB.rotationInterval = DEFAULT_ROTATION_INTERVAL end
 end
 
-local currentVerse = 1
+local currentVerse = math.random(1, #verses)
 local paused = false -- Pause state is session-only; reload resumes rotation.
 local rotationTimer
 local editMode = false
